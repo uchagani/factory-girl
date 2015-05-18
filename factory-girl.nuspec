@@ -13,6 +13,6 @@
     <tags>factory-girl factorygirl factory_girl factorygirl.NET objectmother plant blueprint</tags>
   </metadata>
   <files>
-  	<file src="FactoryGirlCore\bin\FactoryGirlCore.dll" target="lib\net40\" />
+  	<file src="bin\FactoryGirlCore.dll" target="lib\net40\" />
   </files>
 </package>
