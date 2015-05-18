@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>factory-girl</id>
+    <version>$version$</version>
+    <authors>Umair Chagani</authors>
+    <owners>Umair Chagani</owners>
+    <licenseUrl>https://www.gnu.org/licenses/gpl-3.0.txt</licenseUrl>
+    <projectUrl>https://github.com/uchagani/factory-girl</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>factory-girl allows you to easily create test data for your .NET objects.  Supports creating default and named factories.</description>
+    <copyright>Copyright © 2015 Umair Chagani</copyright>
+    <tags>factory-girl factorygirl factory_girl factorygirl.NET objectmother plant blueprint</tags>
+  </metadata>
+  <files>
+  	<file src="bin\FactoryGirlCore.dll" target="lib\net40\" />
+  </files>
+</package>
