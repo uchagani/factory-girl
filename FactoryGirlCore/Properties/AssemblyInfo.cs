@@ -5,11 +5,10 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("factory-girl")]
+[assembly: AssemblyTitle("FactoryGirlCore")]
 [assembly: AssemblyDescription("factory-girl allows you to easily create test data for your .NET objects.  Supports creating default and named factories.")]
 [assembly: AssemblyProduct("FactoryGirlCore")]
 [assembly: AssemblyCopyright("Copyright © Umair Chagani 2015")]
-[assembly: AssemblyCompany("Umair Chagani")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
