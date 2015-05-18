@@ -50,6 +50,12 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="BaseTestMethods.cs" />
+    <Compile Include="BuildTests.cs" />
+    <Compile Include="CreateTests.cs" />
+    <Compile Include="DefineTests.cs" />
+    <Compile Include="Models\Book.cs" />
+    <Compile Include="Models\User.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
