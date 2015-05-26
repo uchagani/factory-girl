@@ -129,7 +129,7 @@ public class User : IRepository
     public string Name { get; set; }
     public string Address { get; set; }
     
-    public Book Save()
+    public User Save()
     {
         // Your logic for saving the model to a Database.
         // Or calling a web service.
