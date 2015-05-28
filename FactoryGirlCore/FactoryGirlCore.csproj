@@ -40,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DuplicateFactoryException.cs" />
+    <Compile Include="Factory.cs" />
     <Compile Include="FactoryGirl.cs" />
     <Compile Include="IDefinable.cs" />
     <Compile Include="IRepository.cs" />

@@ -9,6 +9,7 @@ namespace FactoryGirlTests.Models
         public Category Category { get; set; }
         public int Isbn { get; set; }
         public bool Saved { get; private set; }
+        public string Borrower { get; set; }
 
         public Book Save()
         {

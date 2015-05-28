@@ -14,7 +14,7 @@ namespace FactoryGirlTests
         public void Defining_default_factory_registers_the_factory()
         {
             DefineDefaultUser();
-            var factory = FactoryGirl.DefinedFactories.Where(x => x.Item2 == typeof(User));
+            var factory = FactoryGirl.DefinedFactories.Where(x => x.Type == typeof(User));
             Assert.IsNotNull(factory);
         }
 
@@ -22,7 +22,7 @@ namespace FactoryGirlTests
         public void Defining_named_factory_registers_the_factory()
         {
             DefineAdminUser();
-            var factory = FactoryGirl.DefinedFactories.Where(x => x.Item1 == "AdminUser");
+            var factory = FactoryGirl.DefinedFactories.Where(x => x.Name == "AdminUser");
             Assert.IsNotNull(factory);
         }
 
@@ -34,7 +34,7 @@ namespace FactoryGirlTests
             {
                 Address = ""
             });
-            var count = FactoryGirl.DefinedFactories.Where(x => x.Item2 == typeof(User)).Count();
+            var count = FactoryGirl.DefinedFactories.Where(x => x.Type == typeof(User)).Count();
             Assert.AreEqual(2, count);
         }
 
@@ -42,7 +42,7 @@ namespace FactoryGirlTests
         public void GetDefinedFactories_should_return_all_registered_factories()
         {
             DefineDefaultUser();
-            Assert.IsNotNull(FactoryGirl.DefinedFactories.Where(x => x.Item2 == typeof(User)));
+            Assert.IsNotNull(FactoryGirl.DefinedFactories.Where(x => x.Type == typeof(User)));
             Assert.AreEqual(1, FactoryGirl.DefinedFactories.Count);            
         }
 
@@ -51,8 +51,8 @@ namespace FactoryGirlTests
         {
             DefineDefaultUser();
             DefineDefaultBook();
-            var userFactory = FactoryGirl.DefinedFactories.Where(x => x.Item2 == typeof(User));              
-            var bookFactory = FactoryGirl.DefinedFactories.Where(x => x.Item2 == typeof(Book));
+            var userFactory = FactoryGirl.DefinedFactories.Where(x => x.Type == typeof(User));
+            var bookFactory = FactoryGirl.DefinedFactories.Where(x => x.Type == typeof(Book));
             Assert.IsNotNull(userFactory);         
             Assert.AreEqual(1, userFactory.Count());
             Assert.IsNotNull(bookFactory);
