@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using FactoryGirlCore;
+﻿using FactoryGirlCore;
 using FactoryGirlTests.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -47,19 +46,6 @@ namespace FactoryGirlTests
             FactoryGirl.Define<Book>("TravelBook", () => new Book
             {
                 Category = Category.Travel
-            }).CallBack(Callback.BeforeBuild, () => FactoryGirl.Create<User>("AdminUser"));
-        }
-
-        public void DefineCheckedOutHistoryBook()
-        {
-            FactoryGirl.Define("HistoryBook", () => new Book
-            {
-                Category = Category.History
-            }).CallBack<Book>(Callback.BeforeBuild, () =>
-            {
-                var user = FactoryGirl.Create<User>("AdminUser");
-                var props = typeof (Book).GetProperties();
-                return new Book();
             });
         }
     }

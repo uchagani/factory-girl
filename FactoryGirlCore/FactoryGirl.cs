@@ -7,38 +7,32 @@ namespace FactoryGirlCore
 {
     public class FactoryGirl
     {
-        private static readonly List<Factory> factories = new List<Factory>();
+        private static readonly IDictionary<Tuple<string, Type>, Func<object>> factories = new Dictionary<Tuple<string, Type>, Func<object>>();
         private const string defaultName = "0b99aa69ee034db3b91d5568d7d91977";
 
-        public static ICollection<Factory> DefinedFactories
+        public static ICollection<System.Tuple<string, System.Type>> DefinedFactories
         {
-            get { return factories; }
+            get { return factories.Keys; }
         }
 
-        public static Factory Define<T>(Func<T> factory)
+        public static void Define<T>(Func<T> factory)
         {
-            return Define(defaultName, factory);
+            Define(defaultName, factory);
         }
 
-        public static Factory Define<T>(string name, Func<T> factory)
+        public static void Define<T>(string name, Func<T> factory)
         {
             if (IsDefined(name, typeof(T)))
             {
                 throw new DuplicateFactoryException(String.Format("A factory named {0} has already been registered for the {1} type.  Only one factory per name per type is allowed.", name, typeof(T)));
             }
-            var newFactory = new Factory()
-            {
-                Name = name,
-                Definition = () => factory(),
-                Type = typeof(T)
-            };
-            factories.Add(newFactory);
-            return newFactory;
+
+            factories.Add(new Tuple<string, Type>(name, typeof(T)), () => factory());
         }
-        
+
         public static bool IsDefined(string name, Type factoryType)
         {
-            return factories.Exists(f => f.Name == name && f.Type == factoryType);
+            return factories.ContainsKey(new Tuple<string, Type>(name, factoryType));
         }
 
         public static T Build<T>(string name = defaultName)
@@ -64,12 +58,8 @@ namespace FactoryGirlCore
         public static T Build<T>(string name, Action<T> overrides)
         {
             var key = new Tuple<string, Type>(name, typeof(T));
-            var factory = factories.FirstOrDefault(f => f.Name == name && f.Type == typeof(T));
-            if (factory == null) throw new Exception("Factory with name: " + name + " and type: " + typeof(T) + " could not be found");
-            factory.ExecuteCallBack(Callback.BeforeBuild);
-            var result = (T)factory.Definition();
+            var result = (T)factories[key]();
             overrides(result);
-            factory.ExecuteCallBack(Callback.AfterBuild);
             return result;
         }
 
@@ -107,24 +97,15 @@ namespace FactoryGirlCore
 
         public static T Create<T>(string name, Action<T> overrides) where T : IRepository<T>
         {
-            var factory = factories.FirstOrDefault(f => f.Name == name && f.Type == typeof(T));
-            factory.ExecuteCallBack(Callback.BeforeSave);
             var obj = Build<T>(name, overrides);
             obj.Save();
-            factory.ExecuteCallBack(Callback.AfterSave);
             return obj;
         }
 
         public static ICollection<T> CreateList<T>(int count, string name, Action<T> overrides) where T : IRepository<T>
         {
             var objList = BuildList<T>(count, name, overrides);
-            var factory = factories.FirstOrDefault(f => f.Name == name && f.Type == typeof(T));
-            objList.ToList().ForEach(x =>
-            {
-                factory.ExecuteCallBack(Callback.BeforeSave);
-                x.Save();
-                factory.ExecuteCallBack(Callback.AfterSave);
-            });
+            objList.ToList().ForEach(x => x.Save());
             return objList;
         }
 
