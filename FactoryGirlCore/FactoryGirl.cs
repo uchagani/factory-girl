@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace FactoryGirlCore
 {
@@ -10,9 +12,27 @@ namespace FactoryGirlCore
         private static readonly IDictionary<Tuple<string, Type>, Func<object>> factories = new Dictionary<Tuple<string, Type>, Func<object>>();
         private const string defaultName = "0b99aa69ee034db3b91d5568d7d91977";
 
+        private static readonly IDictionary<Tuple<string, Type>, List<Func<object>>> newFactories = new Dictionary<Tuple<string, Type>, List<Func<object>>>(); 
+
         public static ICollection<System.Tuple<string, System.Type>> DefinedFactories
         {
             get { return factories.Keys; }
+        }
+
+        public static void Define<T>(IFactory<T> factory)
+        {
+            if (IsDefined(defaultName, typeof(T)))
+            {
+                throw new DuplicateFactoryException(String.Format("A factory named {0} has already been registered for the {1} type.  Only one factory per name per type is allowed.", defaultName, typeof(T)));
+            }
+
+            newFactories.Add(new Tuple<string, Type>(defaultName, typeof(T)), new List<Func<object>>
+            {
+                factory.Define,
+                factory.AfterBuild,
+                factory.BeforeCreate,
+                factory.AfterCreate
+            });
         }
 
         public static void Define<T>(Func<T> factory)
@@ -121,6 +141,20 @@ namespace FactoryGirlCore
             {
                 var factory = (IDefinable)Activator.CreateInstance(factoryType);
                 factory.Define();
+            }
+        }
+
+        public static void Initialize(Assembly assembly)
+        {
+            var factoryTypes = assembly.GetTypes()
+                .Where(t => t.BaseType != null && t.BaseType.IsGenericType 
+                    && t.BaseType.GetGenericTypeDefinition() == typeof(FactoryBase<>));
+            
+            foreach (var f in factoryTypes.ToList())
+            {
+                dynamic factory = Activator.CreateInstance(f);
+                Define(factory);
+                //factory.Initialize();
             }
         }
     }
