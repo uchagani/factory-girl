@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Microsoft.CSharp.RuntimeBinder;
 
 namespace FactoryGirlCore
 {
@@ -33,6 +35,59 @@ namespace FactoryGirlCore
                 factory.BeforeCreate,
                 factory.AfterCreate
             });
+        }
+
+        private static readonly IDictionary<Tuple<string, Type>, Func<object>> blahFactories = new Dictionary<Tuple<string, Type>, Func<object>>();
+
+        private static readonly IDictionary<Tuple<string, Type>, dynamic> finalFactories =
+            new Dictionary<Tuple<string, Type>, dynamic>();
+
+        public static void Define<T>(Func<object> factory, Func<dynamic, object> AfterBuild = null, Func<dynamic, object> BeforeCreate = null, Func<dynamic, object> AfterCreate = null)
+        {
+            //blahFactories.Add(new Tuple<string, Type>(defaultName,typeof(T)), factory);
+
+            dynamic f = new ExpandoObject();
+            f.Factory = factory;
+            f.AfterBuild = AfterBuild;
+            f.BeforeCreate = BeforeCreate;
+            finalFactories.Add(new Tuple<string, Type>(defaultName, typeof(T)), f);
+        }
+
+        public static T Build<T>()
+        {
+            //var factoryDef = finalFactories[new Tuple<string, Type>(defaultName, typeof(T))];
+
+            dynamic factoryDef;
+            if (!finalFactories.TryGetValue(new Tuple<string, Type>(defaultName, typeof (T)), out factoryDef))
+                throw new Exception("Undefined factory");
+
+
+            var instance = Activator.CreateInstance(typeof(T));
+            var instanceProperties = instance.GetType().GetProperties();
+
+            var factory = factoryDef.Factory();
+            var factoryType = factory.GetType();
+
+            foreach (var property in instanceProperties)
+            {
+                var propName = property.Name;
+                try
+                {
+                    var propValue = factoryType.GetProperty(propName).GetValue(factory, null);
+                    property.SetValue(instance, propValue, null);
+                }
+                catch (NullReferenceException nref)
+                {
+                    //Swallow exception since it was most likely thrown because a property was not set in the factory definition
+                }
+                catch (RuntimeBinderException rbex)
+                {
+                    //Swallow exception since it was most likely thrown because a property was not set in the factory definition
+                }
+            }
+
+            factoryDef.AfterBuild(instance);
+            return (T)instance;
         }
 
         public static void Define<T>(Func<T> factory)
