@@ -23,14 +23,22 @@ namespace FactoryGirlTests
     {
         public void Define()
         {
-            FactoryGirl.Define<Book>(() => new
+            //FactoryGirl.Define<Book>(() => new
+            //{
+            //    Author = blah(),
+            //    Title = "The Firm",
+            //    Category = Category.Business
+
+            //}, 
+            //AfterBuild: book => book.Author = new UserBlah().Name,
+            //BeforeCreate: book => book.Title = "sdfsadfsdf");
+
+            FactoryGirl.Define(() => new Book
             {
-                Author = blah(),
-                Title = "The Firm",
-                Category = Category.Business,
-            }, 
-            AfterBuild: book => book.Author = new UserBlah().Name,
-            BeforeCreate: book => book.Title = "sdfsadfsdf");
+                Author = "John Grisham",
+                Title = "The Firm"
+            },
+            AfterBuild: book => book.Category = Category.Travel);
         }
 
         public string blah()

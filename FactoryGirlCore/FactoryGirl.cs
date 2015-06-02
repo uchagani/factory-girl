@@ -42,7 +42,7 @@ namespace FactoryGirlCore
         private static readonly IDictionary<Tuple<string, Type>, dynamic> finalFactories =
             new Dictionary<Tuple<string, Type>, dynamic>();
 
-        public static void Define<T>(Func<object> factory, Func<dynamic, object> AfterBuild = null, Func<dynamic, object> BeforeCreate = null, Func<dynamic, object> AfterCreate = null)
+        public static void Define<T>(Func<T> factory, Func<dynamic, object> AfterBuild = null, Func<dynamic, object> BeforeCreate = null, Func<dynamic, object> AfterCreate = null)
         {
             //blahFactories.Add(new Tuple<string, Type>(defaultName,typeof(T)), factory);
 
@@ -53,41 +53,16 @@ namespace FactoryGirlCore
             finalFactories.Add(new Tuple<string, Type>(defaultName, typeof(T)), f);
         }
 
-        public static T Build<T>()
+        private static dynamic GetFactoryDefinition(string name, Type type)
         {
-            //var factoryDef = finalFactories[new Tuple<string, Type>(defaultName, typeof(T))];
-
-            dynamic factoryDef;
-            if (!finalFactories.TryGetValue(new Tuple<string, Type>(defaultName, typeof (T)), out factoryDef))
+            dynamic factoryDef = null;
+            if (finalFactories != null && !finalFactories.TryGetValue(new Tuple<string, Type>(name, type), out factoryDef))
                 throw new Exception("Undefined factory");
 
+            if(factoryDef == null)
+                throw new ArgumentNullException(string.Format("Unable to retreive factory of name {0} and Type {1}", name, type));
 
-            var instance = Activator.CreateInstance(typeof(T));
-            var instanceProperties = instance.GetType().GetProperties();
-
-            var factory = factoryDef.Factory();
-            var factoryType = factory.GetType();
-
-            foreach (var property in instanceProperties)
-            {
-                var propName = property.Name;
-                try
-                {
-                    var propValue = factoryType.GetProperty(propName).GetValue(factory, null);
-                    property.SetValue(instance, propValue, null);
-                }
-                catch (NullReferenceException nref)
-                {
-                    //Swallow exception since it was most likely thrown because a property was not set in the factory definition
-                }
-                catch (RuntimeBinderException rbex)
-                {
-                    //Swallow exception since it was most likely thrown because a property was not set in the factory definition
-                }
-            }
-
-            factoryDef.AfterBuild(instance);
-            return (T)instance;
+            return factoryDef;
         }
 
         public static void Define<T>(Func<T> factory)
@@ -110,15 +85,25 @@ namespace FactoryGirlCore
             return factories.ContainsKey(new Tuple<string, Type>(name, factoryType));
         }
 
-        public static T Build<T>(string name = defaultName)
+        public static T Build<T>(string name = defaultName, bool SkipCallbacks = false)
         {
-            return Build<T>(name, x => { });
+            return Build<T>(defaultName, x => { }, SkipCallbacks: SkipCallbacks);
         }
 
-        public static ICollection<T> BuildList<T>(int count, string name = defaultName)
+        //public static T Build<T>(string name = defaultName)
+        //{
+        //    return Build<T>(name, x => { });
+        //}
+
+        public static ICollection<T> BuildList<T>(int count, string name = defaultName, bool SkipCallbacks = false)
         {
-            return BuildList<T>(count, name, x => { });
+            return BuildList<T>(count, name, x => { }, SkipCallbacks: SkipCallbacks);
         }
+
+        //public static ICollection<T> BuildList<T>(int count, string name = defaultName)
+        //{
+        //    return BuildList<T>(count, name, x => { });
+        //}
 
         public static T Build<T>(Action<T> overrides)
         {
@@ -130,21 +115,33 @@ namespace FactoryGirlCore
             return BuildList<T>(count, defaultName, overrides);
         }
 
-        public static T Build<T>(string name, Action<T> overrides)
+        public static T Build<T>(string name, Action<T> overrides, bool SkipCallbacks = false)
         {
-            var key = new Tuple<string, Type>(name, typeof(T));
-            var result = (T)factories[key]();
+            //var key = new Tuple<string, Type>(name, typeof(T));
+            //var result = (T)factories[key]();
+            //overrides(result);
+            //return result;
+
+            dynamic factoryDef = GetFactoryDefinition(name, typeof (T));
+            var result = (T)factoryDef.Factory();
+
+            if (result == null) 
+                throw new ArgumentNullException(string.Format("Error retreiving defined factory.  Name: {0} Type: {1}", name, typeof(T)));
+
             overrides(result);
+
+            if (!SkipCallbacks)
+                factoryDef.AfterBuild(result);
+
             return result;
         }
 
-        public static ICollection<T> BuildList<T>(int count, string name, Action<T> overrides)
+        public static ICollection<T> BuildList<T>(int count, string name, Action<T> overrides, bool SkipCallbacks = false)
         {
             ICollection<T> collection = new List<T>();
             for (int i = 0; i < count; i++)
             {
-                var obj = Build<T>(name);
-                overrides(obj);
+                var obj = Build<T>(name, overrides, SkipCallbacks);
                 collection.Add(obj);
             }
             return collection;

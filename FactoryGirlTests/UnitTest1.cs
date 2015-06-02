@@ -22,11 +22,7 @@ namespace FactoryGirlTests
             Book2Factory factory = new Book2Factory();
             factory.Define();
             var x = FactoryGirl.Build<Book>();
-            var y = FactoryGirl.Build<Book>();
-            var z = FactoryGirl.Build<Book>();
-            var az = FactoryGirl.Build<Book>();
-            var bz = FactoryGirl.Build<Book>();
-            var cz = FactoryGirl.Build<Book>();
+            var y = FactoryGirl.BuildList<Book>(2);
         }
     }
 }
