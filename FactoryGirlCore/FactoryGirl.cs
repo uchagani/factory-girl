@@ -1,33 +1,46 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using Microsoft.CSharp.RuntimeBinder;
 
 namespace FactoryGirlCore
 {
     public class FactoryGirl
     {
-        private static readonly IDictionary<Tuple<string, Type>, Func<object>> factories = new Dictionary<Tuple<string, Type>, Func<object>>();
+        private static readonly IDictionary<Tuple<string, Type>, dynamic> factories = new Dictionary<Tuple<string, Type>, dynamic>();
         private const string defaultName = "0b99aa69ee034db3b91d5568d7d91977";
 
-        public static ICollection<System.Tuple<string, System.Type>> DefinedFactories
+        public static ICollection<Tuple<string, Type>> DefinedFactories
         {
             get { return factories.Keys; }
         }
 
-        public static void Define<T>(Func<T> factory)
+        public static void Define<T>(Func<T> factory, Func<dynamic, object> AfterBuild = null, Func<dynamic, object> BeforeCreate = null, Func<dynamic, object> AfterCreate = null)
         {
-            Define(defaultName, factory);
+            Define(defaultName, factory, AfterBuild, BeforeCreate, AfterCreate);
         }
 
-        public static void Define<T>(string name, Func<T> factory)
+        public static void Define<T>(string name, Func<T> factory, Func<dynamic, object> AfterBuild = null, Func<dynamic, object> BeforeCreate = null, Func<dynamic, object> AfterCreate = null)
         {
-            if (IsDefined(name, typeof(T)))
-            {
-                throw new DuplicateFactoryException(String.Format("A factory named {0} has already been registered for the {1} type.  Only one factory per name per type is allowed.", name, typeof(T)));
-            }
+            if (IsDefined(name, typeof (T)))
+                throw new DuplicateFactoryException(string.Format("Factory named {0} of Type {1} is already defined", name, typeof(T)));
 
-            factories.Add(new Tuple<string, Type>(name, typeof(T)), () => factory());
+            dynamic f = new ExpandoObject();
+            f.Factory = factory;
+
+            if(AfterBuild != null)
+                f.AfterBuild = AfterBuild;
+            if (BeforeCreate != null)
+                f.BeforeCreate = BeforeCreate;
+            if (AfterCreate != null)
+                f.AfterCreate = AfterCreate;
+
+            factories.Add(new Tuple<string, Type>(name, typeof(T)), f);
         }
 
         public static bool IsDefined(string name, Type factoryType)
@@ -35,77 +48,125 @@ namespace FactoryGirlCore
             return factories.ContainsKey(new Tuple<string, Type>(name, factoryType));
         }
 
-        public static T Build<T>(string name = defaultName)
+        public static bool Contains(ExpandoObject obj, string key)
         {
-            return Build<T>(name, x => { });
+            return ((IDictionary<string, Object>)obj).ContainsKey(key);
         }
 
-        public static ICollection<T> BuildList<T>(int count, string name = defaultName)
+        private static dynamic GetFactoryDefinition(string name, Type type)
         {
-            return BuildList<T>(count, name, x => { });
+            dynamic factoryDef = null;
+            if (factories != null && !factories.TryGetValue(new Tuple<string, Type>(name, type), out factoryDef))
+                throw new Exception("Undefined factory");
+
+            if (factoryDef == null)
+                throw new ArgumentNullException(string.Format("Unable to retreive factory of name {0} and Type {1}", name, type));
+
+            return factoryDef;
         }
 
-        public static T Build<T>(Action<T> overrides)
+        public static T Build<T>(string name = defaultName, bool SkipCallbacks = false)
         {
-            return Build<T>(defaultName, overrides);
+            return Build<T>(name, x => { }, SkipCallbacks: SkipCallbacks);
         }
 
-        public static ICollection<T> BuildList<T>(int count, Action<T> overrides)
+        public static ICollection<T> BuildList<T>(int count, string name = defaultName, bool SkipCallbacks = false)
         {
-            return BuildList<T>(count, defaultName, overrides);
+            return BuildList<T>(count, name, x => { }, SkipCallbacks: SkipCallbacks);
         }
 
-        public static T Build<T>(string name, Action<T> overrides)
+        public static T Build<T>(Action<T> overrides, bool SkipCallbacks = false)
         {
-            var key = new Tuple<string, Type>(name, typeof(T));
-            var result = (T)factories[key]();
+            return Build(defaultName, overrides, SkipCallbacks: SkipCallbacks);
+        }
+
+        public static ICollection<T> BuildList<T>(int count, Action<T> overrides, bool SkipCallbacks = false)
+        {
+            return BuildList(count, defaultName, overrides, SkipCallbacks = SkipCallbacks);
+        }
+
+        public static T Build<T>(string name, Action<T> overrides, bool SkipCallbacks = false)
+        {
+            dynamic factoryDef = GetFactoryDefinition(name, typeof(T));
+            var result = (T)factoryDef.Factory();
+
+            if (result == null)
+                throw new ArgumentNullException(string.Format("Error retreiving defined factory.  Name: {0} Type: {1}",
+                    name, typeof(T)));
+
             overrides(result);
+
+            if (!SkipCallbacks && Contains(factoryDef, "AfterBuild"))
+                factoryDef.AfterBuild(result);
+
             return result;
         }
 
-        public static ICollection<T> BuildList<T>(int count, string name, Action<T> overrides)
+        public static ICollection<T> BuildList<T>(int count, string name, Action<T> overrides, bool SkipCallbacks = false)
         {
             ICollection<T> collection = new List<T>();
             for (int i = 0; i < count; i++)
             {
-                var obj = Build<T>(name);
-                overrides(obj);
+                var obj = Build<T>(name, overrides, SkipCallbacks);
                 collection.Add(obj);
             }
             return collection;
         }
 
-        public static T Create<T>(string name = defaultName) where T : IRepository<T>
+        public static T Create<T>(string name = defaultName, bool SkipCallbacks = false) where T : IRepository<T>
         {
-            return Create<T>(name, x => { });
+            return Create<T>(name, x => { }, SkipCallbacks: SkipCallbacks);
         }
 
-        public static ICollection<T> CreateList<T>(int count, string name = defaultName) where T : IRepository<T>
+        public static ICollection<T> CreateList<T>(int count, string name = defaultName, bool SkipCallbacks = false) where T : IRepository<T>
         {
-            return CreateList<T>(count, name, x => { });
+            return CreateList<T>(count, name, x => { }, SkipCallbacks: SkipCallbacks);
         }
 
-        public static T Create<T>(Action<T> overrides) where T : IRepository<T>
+        public static T Create<T>(Action<T> overrides, bool SkipCallbacks = false) where T : IRepository<T>
         {
-            return Create<T>(defaultName, overrides);
+            return Create(defaultName, overrides, SkipCallbacks: SkipCallbacks);
         }
 
-        public static ICollection<T> CreateList<T>(int count, Action<T> overrides) where T : IRepository<T>
+        public static ICollection<T> CreateList<T>(int count, Action<T> overrides, bool SkipCallbacks = false) where T : IRepository<T>
         {
-            return CreateList<T>(count, defaultName, overrides);
+            return CreateList(count, defaultName, overrides, SkipCallbacks: SkipCallbacks);
         }
 
-        public static T Create<T>(string name, Action<T> overrides) where T : IRepository<T>
+        public static T Create<T>(string name, Action<T> overrides, bool SkipCallbacks = false) where T : IRepository<T>
         {
-            var obj = Build<T>(name, overrides);
-            obj.Save();
-            return obj;
+            var result = Build(name, overrides, SkipCallbacks: SkipCallbacks);
+
+            dynamic factoryDef = GetFactoryDefinition(name, typeof(T));
+
+            if (!SkipCallbacks && Contains(factoryDef, "BeforeCreate"))
+                factoryDef.BeforeCreate(result);
+
+            result.Save();
+
+            if (!SkipCallbacks && Contains(factoryDef, "AfterCreate"))
+                factoryDef.AfterCreate(result);
+
+            return result;
         }
 
-        public static ICollection<T> CreateList<T>(int count, string name, Action<T> overrides) where T : IRepository<T>
+        public static ICollection<T> CreateList<T>(int count, string name, Action<T> overrides, bool SkipCallbacks = false) where T : IRepository<T>
         {
-            var objList = BuildList<T>(count, name, overrides);
-            objList.ToList().ForEach(x => x.Save());
+            var objList = BuildList(count, name, overrides, SkipCallbacks: SkipCallbacks);
+
+            dynamic factoryDef = GetFactoryDefinition(name, typeof(T));
+
+            objList.ToList().ForEach(x =>
+            {
+                if (!SkipCallbacks && Contains(factoryDef, "BeforeCreate"))
+                    factoryDef.BeforeCreate(x);
+
+                x.Save();
+
+                if (!SkipCallbacks && Contains(factoryDef, "AfterCreate"))
+                    factoryDef.AfterCreate(x);
+            });
+
             return objList;
         }
 
