@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace FactoryGirlTests
 {
     [TestClass]
-    public class BuildListNamedTests
+    public class CreateListNamedTests
     {
         private BookFactory factory;
 
@@ -28,9 +28,9 @@ namespace FactoryGirlTests
         }
 
         [TestMethod]
-        public void build_list_named_factory_without_callbacks()
+        public void create_list_named_factory_without_callbacks()
         {
-            var books = FactoryGirl.BuildList<Book>(5, "Named", SkipCallbacks: true);
+            var books = FactoryGirl.CreateList<Book>(5, "Named", SkipCallbacks: true);
             Assert.AreEqual(5, books.Count);
 
             books.ToList().ForEach(book =>
@@ -40,30 +40,32 @@ namespace FactoryGirlTests
                 Assert.AreEqual("Named Author", book.Author);
                 Assert.AreEqual(123, book.Isbn);
                 Assert.AreEqual(Category.Art, book.Category);
+                Assert.IsTrue(book.Saved);
             });
         }
 
         [TestMethod]
-        public void build_list_named_factory()
+        public void create_list_named_factory()
         {
-            var books = FactoryGirl.BuildList<Book>(5, "Named");
+            var books = FactoryGirl.CreateList<Book>(5, "Named");
             Assert.AreEqual(5, books.Count);
 
             books.ToList().ForEach(book =>
             {
                 Assert.AreEqual(typeof(Book), book.GetType());
-                Assert.AreEqual("Named Book", book.Title);
+                Assert.AreEqual("Hello, World!", book.Title);
                 Assert.AreEqual("Named Author", book.Author);
-                Assert.AreEqual(123, book.Isbn);
+                Assert.AreEqual(-1, book.Isbn);
                 Assert.AreEqual(Category.Travel, book.Category);
+                Assert.IsTrue(book.Saved);
             });
         }
 
         [TestMethod]
-        public void build_named_factory_list_with_overrides_without_callbacks()
+        public void create_named_factory_list_with_overrides_without_callbacks()
         {
             const string author = "Override Author";
-            var books = FactoryGirl.BuildList<Book>(5, "Named", x => x.Author = author, SkipCallbacks: true);
+            var books = FactoryGirl.CreateList<Book>(5, "Named", x => x.Author = author, SkipCallbacks: true);
 
             books.ToList().ForEach(book =>
             {
@@ -72,23 +74,26 @@ namespace FactoryGirlTests
                 Assert.AreEqual(author, book.Author);
                 Assert.AreEqual(123, book.Isbn);
                 Assert.AreEqual(Category.Art, book.Category);
+                Assert.IsTrue(book.Saved);
             });
         }
 
         [TestMethod]
-        public void build_named_factory_list_with_overrides()
+        public void create_named_factory_list_with_overrides()
         {
             const string author = "Override Author";
-            var books = FactoryGirl.BuildList<Book>(5, "Named", x => x.Author = author);
+            var books = FactoryGirl.CreateList<Book>(5, "Named", x => x.Author = author);
 
             books.ToList().ForEach(book =>
             {
                 Assert.AreEqual(typeof(Book), book.GetType());
-                Assert.AreEqual("Named Book", book.Title);
+                Assert.AreEqual("Hello, World!", book.Title);
                 Assert.AreEqual(author, book.Author);
-                Assert.AreEqual(123, book.Isbn);
+                Assert.AreEqual(-1, book.Isbn);
                 Assert.AreEqual(Category.Travel, book.Category);
+                Assert.IsTrue(book.Saved);
             });
         }
+
     }
 }

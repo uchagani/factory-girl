@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
 using FactoryGirlCore;
 using FactoryGirlTests.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -8,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace FactoryGirlTests
 {
     [TestClass]
-    public class BuildDefaultTests
+    public class CreateDefaultTests
     {
         private BookFactory factory;
 
@@ -26,47 +28,51 @@ namespace FactoryGirlTests
         }
 
         [TestMethod]
-        public void build_default_factory_without_callbacks()
+        public void create_default_factory_without_callbacks()
         {
-            var book = FactoryGirl.Build<Book>(SkipCallbacks:true);
+            var book = FactoryGirl.Create<Book>(SkipCallbacks: true);
             Assert.AreEqual(typeof(Book), book.GetType());
             Assert.AreEqual("Default Book", book.Title);
             Assert.AreEqual("Default Author", book.Author);
             Assert.AreEqual(123, book.Isbn);
             Assert.AreEqual(Category.Art, book.Category);
+            Assert.IsTrue(book.Saved);
         }
 
         [TestMethod]
-        public void build_default_factory()
+        public void create_default_factory()
         {
-            var book = FactoryGirl.Build<Book>();
+            var book = FactoryGirl.Create<Book>();
             Assert.AreEqual(typeof(Book), book.GetType());
-            Assert.AreEqual("Default Book", book.Title);
+            Assert.AreEqual("Hello, World!", book.Title);
             Assert.AreEqual("Default Author", book.Author);
-            Assert.AreEqual(123, book.Isbn);
+            Assert.AreEqual(-1, book.Isbn);
             Assert.AreEqual(Category.Travel, book.Category);
+            Assert.IsTrue(book.Saved);
         }
 
         [TestMethod]
-        public void build_default_factory_with_overrides_without_callbacks()
+        public void create_default_factory_with_overrides_without_callbacks()
         {
             const string author = "Override Author";
-            var book = FactoryGirl.Build<Book>(x => x.Author = author, SkipCallbacks: true);
+            var book = FactoryGirl.Create<Book>(x => x.Author = author, SkipCallbacks: true);
             Assert.AreEqual(author, book.Author);
             Assert.AreEqual("Default Book", book.Title);
             Assert.AreEqual(123, book.Isbn);
             Assert.AreEqual(Category.Art, book.Category);
+            Assert.IsTrue(book.Saved);
         }
 
         [TestMethod]
-        public void build_default_factory_with_overrides()
+        public void create_default_factory_with_overrides()
         {
             const string author = "Override Author";
-            var book = FactoryGirl.Build<Book>(x => x.Author = author);
+            var book = FactoryGirl.Create<Book>(x => x.Author = author);
             Assert.AreEqual(author, book.Author);
-            Assert.AreEqual("Default Book", book.Title);
-            Assert.AreEqual(123, book.Isbn);
+            Assert.AreEqual("Hello, World!", book.Title);
+            Assert.AreEqual(-1, book.Isbn);
             Assert.AreEqual(Category.Travel, book.Category);
+            Assert.IsTrue(book.Saved);
         }
     }
 }

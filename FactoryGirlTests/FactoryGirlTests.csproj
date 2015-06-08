@@ -51,13 +51,14 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="BaseTestMethods.cs" />
-    <Compile Include="Book2Factory.cs" />
     <Compile Include="BookFactory.cs" />
     <Compile Include="BuildListDefaultTests.cs" />
     <Compile Include="BuildListNamedTests.cs" />
     <Compile Include="BuildNamedTests.cs" />
-    <Compile Include="CreateTests.cs" />
+    <Compile Include="CreateDefaultTests.cs" />
+    <Compile Include="CreateListDefaultTests.cs" />
+    <Compile Include="CreateListNamedTests.cs" />
+    <Compile Include="CreateNamedTests.cs" />
     <Compile Include="DefineTests.cs" />
     <Compile Include="Models\Book.cs" />
     <Compile Include="Models\User.cs" />

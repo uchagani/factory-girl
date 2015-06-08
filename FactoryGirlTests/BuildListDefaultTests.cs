@@ -12,12 +12,12 @@ namespace FactoryGirlTests
     [TestClass]
     public class BuildListDefaultTests
     {
-        private Book2Factory factory;
+        private BookFactory factory;
 
         [TestInitialize]
         public void Init()
         {
-            factory = new Book2Factory();
+            factory = new BookFactory();
             factory.Define();
         }
 
@@ -72,6 +72,22 @@ namespace FactoryGirlTests
                 Assert.AreEqual(author, book.Author);
                 Assert.AreEqual(123, book.Isbn);
                 Assert.AreEqual(Category.Art, book.Category);
+            });
+        }
+
+        [TestMethod]
+        public void build_default_factory_list_with_overrides()
+        {
+            const string author = "Override Author";
+            var books = FactoryGirl.BuildList<Book>(5, x => x.Author = author);
+
+            books.ToList().ForEach(book =>
+            {
+                Assert.AreEqual(typeof(Book), book.GetType());
+                Assert.AreEqual("Default Book", book.Title);
+                Assert.AreEqual(author, book.Author);
+                Assert.AreEqual(123, book.Isbn);
+                Assert.AreEqual(Category.Travel, book.Category);
             });
         }
 
