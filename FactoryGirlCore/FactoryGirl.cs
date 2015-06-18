@@ -47,6 +47,11 @@ namespace FactoryGirlCore
         {
             return factories.ContainsKey(new Tuple<string, Type>(name, factoryType));
         }
+        
+        public static bool IsDefined(Type factoryType)
+        {
+            return factories.ContainsKey(new Tuple<string, Type>(defaultName, factoryType));
+        }
 
         public static bool Contains(ExpandoObject obj, string key)
         {
